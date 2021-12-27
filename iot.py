@@ -31,6 +31,9 @@ input_pins=[10,2,14] #increase__decrease__reset#
 #SET INPUT & OUTPUT PINS
 from machine import Pin,ADC
 LDR = ADC(0)
+code = 1 
+keypad = []
+stop_resume = True
 bulb = Pin(3,Pin.OUT)
 out_pins = []
 in_pins = []
@@ -113,7 +116,7 @@ for k in range(3):
 #_______________________________________________________________#
 
 def web_page(Counter, code):
-    title="Seven Segment Control - Counter "+str(Counter)+str(code)   #Page Title
+    title= str(Counter)+str(code)   #Page Title
     html_page = """<html>
     <head>
         <title>""" + title + """</title>
@@ -183,33 +186,45 @@ while(1):
         reset_request = request.find('GET /?reset')#Search for reset parameter
         on_request = request.find('GET /?on')#Search for decrease parameter
         off_request = request.find('GET /?off')#Search for reset parameter
+        stop_resume_request = request.find('GET /?sr')#Search for reset parameter
         
-        #Excute operation according to the parameter found
-        if(increase_request != -1):
-            increase()
-            
-        elif(decrease_request != -1):
-            decrease()
+        # keypad code
+        for i in range(10):
+            keypad.append(request.find('GET /?num'+str(i)))#Search for reset parameter
         
-        elif(reset_request != -1):
-            reset()
+        for i in range(10):
+            if (keypad[i] != -1):
+                Counter = i
+                
+        if(stop_resume != -1):
+                stop_resume = not stop_resume
+        if stop_resume:
+            #Excute operation according to the parameter found
+            if(increase_request != -1):
+                increase()
+                
+            elif(decrease_request != -1):
+                decrease()
             
-        # The LDR Value
-        ldr_value = LDR.read()
-        if ldr_value > 30:
-            state = "weak"
-            code = 1
-        if ldr_value > 350:
-            state = "moderate"
-            code = 2
-        if ldr_value > 900:
-            state = "intensive"
-            code = 3
-        #   Relay (bulb) control
-        if(on_request != -1):
-            bulb.value(1)
-        elif(off_request != -1):
-            bulb.value(0)
+            elif(reset_request != -1):
+                reset()
+                
+            # The LDR Value
+            ldr_value = LDR.read()
+            if ldr_value > 30:
+                state = "weak"
+                code = 1
+            if ldr_value > 250:
+                state = "moderate"
+                code = 2
+            if ldr_value > 900:
+                state = "intensive"
+                code = 3
+            #   Relay (bulb) control
+            if(on_request != -1):
+                bulb.value(1)
+            elif(off_request != -1):
+                bulb.value(0)
         
         #send web page after updating counter
         connection.sendall(web_page(Counter, code))
