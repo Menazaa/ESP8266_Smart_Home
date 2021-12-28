@@ -41,7 +41,6 @@ nine_slow=[[1,1,1,1,1,1,0]
 Counter=0  #Initialize Counter
 LDR = ADC(0) # config the analog input
 code = 1    # for sending ldr state as coded data
-keypad = [] # for taking keypad data from the app
 stop_resume = True  # for stop and resume functionality of the whole app
 
 
@@ -222,13 +221,12 @@ while(1):
         
         # keypad code
         for i in range(10):
-            keypad.append(request.find('GET /?num'+str(i)))#Search for reset parameter
-        
-        for i in range(10):
-            if (keypad[i] != -1):
+            if (request.find('GET /?num'+str(i)) != -1):
                 Counter = i
+                seven_segment(Counter)
+            
                 
-        if(stop_resume != -1):
+        if(stop_resume_request != -1):
                 stop_resume = not stop_resume
         if stop_resume:
             #Excute operation according to the parameter found
@@ -264,4 +262,3 @@ while(1):
         
     except :
         connection.close()#In case error close connection
-
