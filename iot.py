@@ -1,6 +1,6 @@
 # Import modules
 from machine import Pin,ADC # Pins for GPIO pins and ADC for reading analog data from the LDR
-from time import sleep_ms   # just for the delays in the code
+from time import sleep_ms, time   # just for the delays in the code
 from network import WLAN , AP_IF # Import WirelessLAN and AccessPoint Internet Family
 from socket import socket,AF_INET,SOCK_STREAM  # import socket class 
 
@@ -135,7 +135,7 @@ for k in range(3):
 ##### the main web page we manage the web site as serverside rendering web application 
 
 def web_page(Counter, code):
-    title= str(Counter)+str(code)   # the data we send 
+    title= "code"+str(Counter)+str(code)   # the data we send 
     html_page = """<html>
     <head>
         <title>""" + title + """</title>
@@ -200,6 +200,9 @@ seven_segment(0)#Initialize 7 Segment Dispaly to ZERO
 
 ########## The main loop of the program #############
 
+previous_time = time()
+current_time = time()
+
 while(1):
     try:
         ####### connection and request part #########
@@ -239,17 +242,25 @@ while(1):
             elif(reset_request != -1):
                 reset()
                 
-            # The LDR Value
-            ldr_value = LDR.read()
-            if ldr_value > 30:
-                state = "weak"
-                code = 1
-            if ldr_value > 250:
-                state = "moderate"
-                code = 2
-            if ldr_value > 900:
-                state = "intensive"
-                code = 3
+            
+            ## updating the current time variable
+            current_time = time()
+            
+            if (current_time - previous_time > 1):
+                previous_time = current_time
+                # The LDR Value
+                ldr_value = LDR.read()
+                if ldr_value > 30:
+                    state = "weak"
+                    code = 1
+                if ldr_value > 250:
+                    state = "moderate"
+                    code = 2
+                if ldr_value > 900:
+                    state = "intensive"
+                    code = 3
+                
+                
             #   Relay (bulb) control
             if(on_request != -1):
                 bulb.value(1)
