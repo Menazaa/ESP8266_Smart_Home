@@ -42,6 +42,7 @@ Counter=0  #Initialize Counter
 LDR = ADC(0) # config the analog input
 code = 1    # for sending ldr state as coded data
 stop_resume = True  # for stop and resume functionality of the whole app
+stop_resume_state = ""
 
 
 
@@ -135,45 +136,131 @@ for k in range(3):
 ##### the main web page we manage the web site as serverside rendering web application 
 
 def web_page(Counter, code):
-    title= "code"+str(Counter)+str(code)   # the data we send 
+    title= str(Counter)+str(code)   # the data we send 
     html_page = """<html>
     <head>
         <title>""" + title + """</title>
     <meta content="width=device-width, initial-scale=1" name="viewport"></meta>
     <style>
-        .button {
-            background-color:blue;
-            width:250px;
-            border:none;
-            color:white;
-            padding:15px 32px;
-            margin:1vw;
-            font-size:16px;
+        * {  
+        margin: 0;  
+        padding: 0;  
+        }  
+        body {  
+        font: 71%/1.5 Verdana, Sans-Serif;  
+        background: #eee;  
+        }  
+        #container {  
+        margin: 100px auto;  
+        width: 760px;  
+        }   
+        #keyboard {  
+        margin: 0;  
+        padding: 0;  
+        list-style: none;  
+        }  
+            #keyboard li {  
+            float: left;  
+            margin: 0 5px 5px 0;  
+            width: 60px;  
+            height: 60px;  
+            font-size: 2vw;
+            line-height: 60px;  
+            text-align: center;  
+            background: #fff;  
+            border: 1px solid #f9f9f9;  
+            border-radius: 5px;  
+            }  
+                .capslock, .tab, .left-shift, .clearl, .switch {  
+                clear: left;  
+                }  
+                    #keyboard .tab, #keyboard .delete {  
+                    width: 70px;  
+                    }  
+                    #keyboard .capslock {  
+                    width: 80px;  
+                    }  
+                    #keyboard .return {  
+                    width: 130px;  
+                    }  
+                    #keyboard .left-shift{  
+                    width: 70px;  
+                    }  
+
+                    #keyboard .switch {
+                    width: 130px;
+                    }
+                    #keyboard .rightright-shift {  
+                    width: 109px;  
+                    }  
+                .lastitem {  
+                margin-right: 0;  
+                }  
+                .uppercase {  
+                text-transform: uppercase;  
+                }  
+                #keyboard .space {  
+                float: left;
+                width: 556px;  
+                }  
+                #keyboard .switch, #keyboard .space, #keyboard .return{
+                font-size: 1vw;
+                }
+                .on {  
+                display: none;  
+                }  
+                #keyboard li:hover {  
+                position: relative;  
+                top: 1px;  
+                left: 1px;  
+                border-color: #e5e5e5;  
+                cursor: pointer;  
+                }  
+            a {
+                text-decoration: none;
+                color: #000000;
             }
     </style>
     </head>
-    <center><body style="background-color:f5f5f5">
-        <div>
-            <p style="font-size:4vw;font-weight:bold;">The Project Team</p>
-            <p style="font-size:2vw">Seven Segment Control Project</p>
+    <center>
+    <center>
+    <body>
+    <div>
+        <p style="font-size:4vw;font-weight:bold;">The Project Team</p>
+        <p style="font-size:2vw">Seven Segment Control Project</p>
         </div>
         <hr/>
         <p style="font-size:2vw">7 Segment Dispaly Value """ + str(Counter) + """</p>
         <p style="font-size:2vw">The light bulb intensity is """ + state + """</p>
-        <div><form>
-            <button class="button" name="increase" type="submit" value="">Increase</button>
-            <br>
-            <button class="button" name="decrease" type="submit" value="">Decrease</button>
-            <br>
-            <button class="button" name="reset" type="submit" value="">Reset</button>
-            <br>
-            <button class="button" name="refresh" type="submit" value="">Refresh</button>
-            <br>
-            <button class="button" name="on" type="submit" value="">ON</button>
-            <br>
-            <button class="button" name="off" type="submit" value="">OFF</button>
-        </form></div>
-    </body></center>
+        <p style="font-size:2vw; color: blue"> """ + stop_resume_state + """</p>
+        <div id="container">  
+            <ul id="keyboard">   
+                <a href="/?num1"><li class="letter">1</li></a>  
+                <a href="/?num2"><li class="letter">2</li></a>  
+                <a href="/?num3"><li class="letter">3</li></a>  
+                <a href="/?num4"><li class="letter clearl">4</li></a>  
+                <a href="/?num5"><li class="letter">5</li></a>  
+                <a href="/?num6"><li class="letter">6</li></a> 
+            
+                <a href="/?num7"><li class="letter clearl">7</li></a>  
+                <a href="/?num8"><li class="letter ">8</li></a>  
+                <a href="/?num9"><li class="letter">9</li></a>  
+                <a href="/?num0"><li class="letter">0</li></a>
+                <a href="/?increase"><li class="switch">Increase</li></a>  
+                <a href="/?decrease"><li class="return">Decrease</li></a>
+                <a href="/?"><li class="return">Refresh</li></a>
+                <a href="/?reset"><li class="switch">Reset</li></a>
+                <a href="/?on"><li class="return">ON</li></a>
+                <a href="/?off"><li class="return">OFF</li></a>
+                <a href="/?sr"><li class="switch">Stop/Resume</li></a>  
+            </ul>  
+        </div>  
+        
+        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>  
+        <script type="text/javascript" src="js/keyboard.js"></script>
+    </body>
+    </center>
+    </center>
     </html>"""
     return html_page
 
@@ -222,15 +309,19 @@ while(1):
         off_request = request.find('GET /?off')#Search for reset parameter
         stop_resume_request = request.find('GET /?sr')#Search for reset parameter
         
-        # keypad code
-        for i in range(10):
-            if (request.find('GET /?num'+str(i)) != -1):
-                Counter = i
-                seven_segment(Counter)
             
-                
+        ##   stop / resume functionality     
         if(stop_resume_request != -1):
                 stop_resume = not stop_resume
+                
+        ##      system state   
+        if  stop_resume:
+            stop_resume_state = "Running"
+        else:
+            stop_resume_state = "Stopping"
+            
+            
+            
         if stop_resume:
             #Excute operation according to the parameter found
             if(increase_request != -1):
@@ -242,7 +333,11 @@ while(1):
             elif(reset_request != -1):
                 reset()
                 
-            
+            # keypad code
+            for i in range(10):
+                if (request.find('GET /?num'+str(i)) != -1):
+                    Counter = i
+                    seven_segment(Counter)
             ## updating the current time variable
             current_time = time()
             
