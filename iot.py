@@ -240,7 +240,7 @@ while(1):
                 bulb.value(0)
         
         #send web page after updating counter
-        connection.sendall("HTTP/1.0 200 OK\r\nServer: NodeMCU\r\nContent-Type: text/html\r\n\r\n"+send_json(Counter, state, stop_resume_state))
+        connection.sendall("HTTP/1.0 200 OK\r\nServer: NodeMCU\r\nContent-Type: text/json\r\n\r\n"+send_json(Counter, state, stop_resume_state))
         connection.close()#close connection 
         
     except :
