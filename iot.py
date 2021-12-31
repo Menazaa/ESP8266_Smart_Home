@@ -2,7 +2,7 @@
 from machine import Pin,ADC # Pins for GPIO pins and ADC for reading analog data from the LDR
 from time import sleep_ms, time   # just for the delays in the code
 from network import WLAN , AP_IF # Import WirelessLAN and AccessPoint Internet Family
-from socket import socket,AF_INET,SOCK_STREAM  # import socket class
+from socket import socket, AF_INET, SOCK_STREAM  # import socket class
 import ujson 
 
 
@@ -39,9 +39,8 @@ nine_slow=[[1,1,1,1,1,1,0]
 
 
 ### initial variable data ###
-Counter=0  #Initialize Counter
+Counter = 0  #Initialize Counter
 LDR = ADC(0) # config the analog input
-code = 1    # for sending ldr state as coded data
 stop_resume = True  # for stop and resume functionality of the whole app
 stop_resume_state = ""
 
@@ -130,14 +129,16 @@ def reset_interrupt(pin):#Interrupt Routine for Reset
         
         
 # SET Interrupts Pins
-handlers=[increase_interrupt,decrease_interrupt,reset_interrupt]
+handlers=[increase_interrupt, decrease_interrupt, reset_interrupt]
 for k in range(3):
     in_pins[k].irq(trigger=Pin.IRQ_FALLING, handler=handlers[k])
 
 #####  send json data
 def send_json(Counter, state, stop_resume_state):
+    
     jsonData = {"Counter":Counter,"LDR": state, "state": stop_resume_state}
     encoded = ujson.dumps(jsonData)
+    
     return encoded
 
 
@@ -145,7 +146,7 @@ def send_json(Counter, state, stop_resume_state):
 ###### creating and initialization of wifi access point ########
 
 WIFI = WLAN(AP_IF) # Create a WLAN object as AccessPoint
-WIFI.config(essid='Seven Segment Controller',password='7777*7777',authmode=4) #Configure Access Point Name , Encryption and Password
+WIFI.config(essid='Seven Segment Controller',password='7777*7777', authmode= 4) #Configure Access Point Name , Encryption and Password
 WIFI.active(True)  #Turn Access Point on
 while not WIFI.isconnected():
         pass   # Don't Skip until Connection Success  Note That ESP IP is 192.168.4.1 in Default
@@ -153,7 +154,7 @@ while not WIFI.isconnected():
 
 ###### creating and initialization of sockets ########
 #Create Object of socket Class
-s = socket(AF_INET,SOCK_STREAM)   #AddressFamily:IP v4 | TCP Protocol
+s = socket(AF_INET, SOCK_STREAM)   #AddressFamily:IP v4 | TCP Protocol
 s.bind(('',80))  #Assign socket to ESP Address on Port 80 (HTTP PORT)
 s.listen(10)  #Start accepting TCP connections with maximum 10 connections
 
@@ -182,9 +183,9 @@ while(1):
         increase_request =request.find('GET /?increase')#Search for increase parameter
         decrease_request = request.find('GET /?decrease')#Search for decrease parameter
         reset_request = request.find('GET /?reset')#Search for reset parameter
-        on_request = request.find('GET /?on')#Search for decrease parameter
-        off_request = request.find('GET /?off')#Search for reset parameter
-        stop_resume_request = request.find('GET /?sr')#Search for reset parameter
+        on_request = request.find('GET /?on')#Search for on parameter
+        off_request = request.find('GET /?off')#Search for off parameter
+        stop_resume_request = request.find('GET /?sr')#Search for sr parameter
         
             
         ##   stop / resume functionality     
@@ -224,13 +225,10 @@ while(1):
                 ldr_value = LDR.read()
                 if ldr_value > 5:
                     state = "weak"
-                    code = 1
                 if ldr_value > 600:
                     state = "moderate"
-                    code = 2
                 if ldr_value > 900:
                     state = "intensive"
-                    code = 3
                 
                 
             #   Relay (bulb) control
