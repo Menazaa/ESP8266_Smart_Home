@@ -2,7 +2,8 @@
 from machine import Pin,ADC # Pins for GPIO pins and ADC for reading analog data from the LDR
 from time import sleep_ms, time   # just for the delays in the code
 from network import WLAN , AP_IF # Import WirelessLAN and AccessPoint Internet Family
-from socket import socket,AF_INET,SOCK_STREAM  # import socket class 
+from socket import socket,AF_INET,SOCK_STREAM  # import socket class
+import ujson 
 
 
 
@@ -133,136 +134,12 @@ handlers=[increase_interrupt,decrease_interrupt,reset_interrupt]
 for k in range(3):
     in_pins[k].irq(trigger=Pin.IRQ_FALLING, handler=handlers[k])
 
-##### the main web page we manage the web site as serverside rendering web application 
+#####  send json data
+def send_json(Counter, state, stop_resume_state):
+    jsonData = {"Counter":Counter,"LDR": state, "state": stop_resume_state}
+    encoded = ujson.dumps(jsonData)
+    return encoded
 
-def web_page(Counter, code):
-    title= str(Counter)+str(code)   # the data we send 
-    html_page = """<html>
-    <head>
-        <title>""" + title + """</title>
-    <meta content="width=device-width, initial-scale=1" name="viewport"></meta>
-    <style>
-        * {  
-        margin: 0;  
-        padding: 0;  
-        }  
-        body {  
-        font: 71%/1.5 Verdana, Sans-Serif;  
-        background: #eee;  
-        }  
-        #container {  
-        margin: 100px auto;  
-        width: 760px;  
-        }   
-        #keyboard {  
-        margin: 0;  
-        padding: 0;  
-        list-style: none;  
-        }  
-            #keyboard li {  
-            float: left;  
-            margin: 0 5px 5px 0;  
-            width: 60px;  
-            height: 60px;  
-            font-size: 2vw;
-            line-height: 60px;  
-            text-align: center;  
-            background: #fff;  
-            border: 1px solid #f9f9f9;  
-            border-radius: 5px;  
-            }  
-                .capslock, .tab, .left-shift, .clearl, .switch {  
-                clear: left;  
-                }  
-                    #keyboard .tab, #keyboard .delete {  
-                    width: 70px;  
-                    }  
-                    #keyboard .capslock {  
-                    width: 80px;  
-                    }  
-                    #keyboard .return {  
-                    width: 130px;  
-                    }  
-                    #keyboard .left-shift{  
-                    width: 70px;  
-                    }  
-
-                    #keyboard .switch {
-                    width: 130px;
-                    }
-                    #keyboard .rightright-shift {  
-                    width: 109px;  
-                    }  
-                .lastitem {  
-                margin-right: 0;  
-                }  
-                .uppercase {  
-                text-transform: uppercase;  
-                }  
-                #keyboard .space {  
-                float: left;
-                width: 556px;  
-                }  
-                #keyboard .switch, #keyboard .space, #keyboard .return{
-                font-size: 1vw;
-                }
-                .on {  
-                display: none;  
-                }  
-                #keyboard li:hover {  
-                position: relative;  
-                top: 1px;  
-                left: 1px;  
-                border-color: #e5e5e5;  
-                cursor: pointer;  
-                }  
-            a {
-                text-decoration: none;
-                color: #000000;
-            }
-    </style>
-    </head>
-    <center>
-    <center>
-    <body>
-    <div>
-        <p style="font-size:4vw;font-weight:bold;">The Project Team</p>
-        <p style="font-size:2vw">Seven Segment Control Project</p>
-        </div>
-        <hr/>
-        <p style="font-size:2vw">7 Segment Dispaly Value """ + str(Counter) + """</p>
-        <p style="font-size:2vw">The light bulb intensity is """ + state + """</p>
-        <p style="font-size:2vw; color: blue"> """ + stop_resume_state + """</p>
-        <div id="container">  
-            <ul id="keyboard">   
-                <a href="/?num1"><li class="letter">1</li></a>  
-                <a href="/?num2"><li class="letter">2</li></a>  
-                <a href="/?num3"><li class="letter">3</li></a>  
-                <a href="/?num4"><li class="letter clearl">4</li></a>  
-                <a href="/?num5"><li class="letter">5</li></a>  
-                <a href="/?num6"><li class="letter">6</li></a> 
-            
-                <a href="/?num7"><li class="letter clearl">7</li></a>  
-                <a href="/?num8"><li class="letter ">8</li></a>  
-                <a href="/?num9"><li class="letter">9</li></a>  
-                <a href="/?num0"><li class="letter">0</li></a>
-                <a href="/?increase"><li class="switch">Increase</li></a>  
-                <a href="/?decrease"><li class="return">Decrease</li></a>
-                <a href="/?"><li class="return">Refresh</li></a>
-                <a href="/?reset"><li class="switch">Reset</li></a>
-                <a href="/?on"><li class="return">ON</li></a>
-                <a href="/?off"><li class="return">OFF</li></a>
-                <a href="/?sr"><li class="switch">Stop/Resume</li></a>  
-            </ul>  
-        </div>  
-        
-        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>  
-        <script type="text/javascript" src="js/keyboard.js"></script>
-    </body>
-    </center>
-    </center>
-    </html>"""
-    return html_page
 
 
 ###### creating and initialization of wifi access point ########
@@ -345,10 +222,10 @@ while(1):
                 previous_time = current_time
                 # The LDR Value
                 ldr_value = LDR.read()
-                if ldr_value > 30:
+                if ldr_value > 5:
                     state = "weak"
                     code = 1
-                if ldr_value > 250:
+                if ldr_value > 600:
                     state = "moderate"
                     code = 2
                 if ldr_value > 900:
@@ -363,7 +240,7 @@ while(1):
                 bulb.value(0)
         
         #send web page after updating counter
-        connection.sendall(web_page(Counter, code))
+        connection.sendall("HTTP/1.0 200 OK\r\nServer: NodeMCU\r\nContent-Type: text/html\r\n\r\n"+send_json(Counter, state, stop_resume_state))
         connection.close()#close connection 
         
     except :
